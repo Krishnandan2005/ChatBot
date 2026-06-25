@@ -1,0 +1,49 @@
+/* Import Outfit font with full weight range */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+
+/* Tailwind CSS v4 */
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* Dark mode triggers on .dark class (manual toggle via JS) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Apply Outfit font globally */
+* {
+    font-family: "Outfit", sans-serif;
+}
+
+@theme {
+    /* Brand color — use as bg-primary, text-primary etc. */
+    --color-primary: #E6CCFF;
+}
+
+/* Hide scrollbar (page still scrolls) */
+::-webkit-scrollbar {
+    display: none;
+}
+
+.reset-tw:not(pre):not(code){
+    all: revert;
+}
+
+
+.prose pre::-webkit-scrollbar {
+  height: 6px;
+}
+
+.prose pre::-webkit-scrollbar-thumb {
+  background: #6d28d9;
+  border-radius: 999px;
+}
+
+.prose code::before,
+.prose code::after {
+  display: none;
+}
+
+.prose img {
+  border-radius: 1rem;
+}
+
+
