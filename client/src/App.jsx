@@ -6,42 +6,53 @@ import Community from "./pages/Community";
 import Credits from "./pages/Credits";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { assets } from "./assets/assets";
-import './assets/prism.css'
+import "./assets/prism.css";
 import Loading from "./pages/Loading";
 import { useAppContext } from "./context/AppContext";
 import Login from "./pages/Login";
+import { Toaster } from "react-hot-toast";
 
 function App() {
+  const { user, loadingUser } = useAppContext();
 
-  const {user} = useAppContext()
+  const [isMenuOpen, setMenuOpen] = useState(false);
+  const { pathname } = useLocation();
 
-  const [isMenuOpen,setMenuOpen] = useState(false);
-  const {pathname} = useLocation()
-
-  if(pathname === '/loading') return <Loading/>
+  if (pathname === "/loading" || loadingUser) return <Loading />;
 
   return (
     <>
-    {!isMenuOpen && <img src={assets.menu_icon} className="absolute top-3 left-3 w-8 cursor-pointer md:hidden not-dark:invert 
-    " onClick={()=>{setMenuOpen(true)}}/>}
+      <Toaster />
+      {!isMenuOpen && (
+        <img
+          src={assets.menu_icon}
+          className="absolute top-3 left-3 w-8 cursor-pointer md:hidden not-dark:invert 
+    "
+          onClick={() => {
+            setMenuOpen(true);
+          }}
+        />
+      )}
 
-    {user ? (
-      <div className="dark:bg-gradient-to-b from-[#242124] to-[#000000] dark:text-white">
-        <div className="flex h-screen w-screen">
-          <Sidebar isMenuOpen={isMenuOpen} setMenuOpen={setMenuOpen} />
-          <Routes>
-            <Route path="/" element={<ChatBox />} />
-            <Route path="/credits" element={<Credits />} />
-            <Route path="/community" element={<Community />} />
-          </Routes>
+      {user ? (
+        <div className="dark:bg-gradient-to-b from-[#242124] to-[#000000] dark:text-white">
+          <div className="flex h-screen w-screen">
+            <Sidebar isMenuOpen={isMenuOpen} setMenuOpen={setMenuOpen} />
+
+            <main className="flex-1 overflow-y-auto">
+              <Routes>
+                <Route path="/" element={<ChatBox />} />
+                <Route path="/credits" element={<Credits />} />
+                <Route path="/community" element={<Community />} />
+              </Routes>
+            </main>
+          </div>
         </div>
-      </div>
-    ) : (
-      <div className="bg-gradient-to-b from-[#242124] to-[#000000] flex items-center justify-center h-screen w-screen">
-        <Login />
-      </div>
-    )}
-      
+      ) : (
+        <div className="bg-gradient-to-b from-[#242124] to-[#000000] flex items-center justify-center h-screen w-screen">
+          <Login />
+        </div>
+      )}
     </>
   );
 }

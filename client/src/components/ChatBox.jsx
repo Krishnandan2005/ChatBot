@@ -2,9 +2,10 @@ import React, { useEffect, useRef, useState } from "react";
 import { useAppContext } from "../context/AppContext";
 import { assets } from "../assets/assets";
 import Message from "./Message";
+import toast from "react-hot-toast";
 
 const ChatBox = () => {
-  const { selectedChats, theme } = useAppContext();
+  const { selectedChat, theme, user, axios, token, setUser } = useAppContext();
 
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -16,35 +17,55 @@ const ChatBox = () => {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-
     if (!prompt.trim()) return;
+    if (!user) return toast("Login to send message");
+
+    const promptCopy = prompt;
+    setPrompt("");
+    setLoading(true);
 
     try {
-      setLoading(true);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "user",
+          content: promptCopy,
+          timestamp: Date.now(),
+          isImage: false,
+        },
+      ]);
 
-      console.log({
-        prompt,
-        mode,
-        isPublished,
-      });
+      const { data } = await axios.post(
+        `/api/message/${mode}`,
+        { chatId: selectedChat._id, prompt: promptCopy, isPublished },
+        { headers: { Authorization: token } }
+      );
 
-      // API Call Here
-
-      setPrompt("");
+      if (data.success) {
+        setMessages((prev) => [...prev, data.reply]);
+        setUser((prev) => ({
+          ...prev,
+          credits: prev.credits - (mode === "image" ? 2 : 1),
+        }));
+      } else {
+        toast.error(data.message);
+        setPrompt(promptCopy);
+      }
     } catch (error) {
-      console.error(error);
+      toast.error(error.message);
+      setPrompt(promptCopy);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (selectedChats) {
-      setMessages(selectedChats.messages || []);
+    if (selectedChat) {
+      setMessages(selectedChat.messages || []);
     } else {
       setMessages([]);
     }
-  }, [selectedChats]);
+  }, [selectedChat]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({
@@ -63,7 +84,6 @@ const ChatBox = () => {
               alt="Logo"
               className="w-full max-w-56 sm:max-w-68"
             />
-
             <p className="mt-5 text-4xl sm:text-6xl text-center text-gray-400 dark:text-white">
               Ask me Anything
             </p>
@@ -82,7 +102,6 @@ const ChatBox = () => {
               alt="Assistant"
               className="w-9 h-9 rounded-full object-cover ring-2 ring-purple-500/20"
             />
-
             <div className="px-5 py-4 rounded-3xl rounded-tl-lg bg-gradient-to-br from-white via-slate-50 to-violet-50 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.08)] dark:from-[#211B2E] dark:via-[#1B1625] dark:to-[#14101C] dark:border-[#80609F]/20">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-[pulse_1s_ease-in-out_infinite]" />
@@ -105,7 +124,6 @@ const ChatBox = () => {
           <p className="text-xs text-gray-500 dark:text-gray-400">
             Publish your generated image to the community
           </p>
-
           <input
             id="publish"
             type="checkbox"
@@ -129,7 +147,6 @@ const ChatBox = () => {
           <option value="text" className="dark:bg-purple-900">
             Text
           </option>
-
           <option value="image" className="dark:bg-purple-900">
             Images
           </option>
