@@ -4,27 +4,42 @@ import { useAppContext } from "../context/AppContext";
 
 function Loading() {
   const navigate = useNavigate();
-  const {fetchUser} = useAppContext
+
+  // ✅ Call the hook correctly
+  const { fetchUser } = useAppContext();
 
   useEffect(() => {
+    const loadUser = async () => {
+      try {
+        // Wait for the webhook to update the user
+        await fetchUser();
+
+        // Redirect to home
+        navigate("/");
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+        navigate("/");
+      }
+    };
+
+    // Wait a few seconds so the webhook has time to update the DB
     const timeout = setTimeout(() => {
-      fetchUser()
-      navigate("/");
-    }, 8000);
+      loadUser();
+    }, 3000);
 
     return () => clearTimeout(timeout);
-  }, [navigate]);
+  }, [fetchUser, navigate]);
 
   return (
     <div className="h-screen w-screen flex items-center justify-center bg-gradient-to-br from-[#531B81] via-[#3A2168] to-[#1E133A] overflow-hidden">
-      
+
       {/* Background Glow */}
       <div className="absolute w-72 h-72 bg-purple-500/20 rounded-full blur-3xl top-20 left-20 animate-pulse" />
       <div className="absolute w-72 h-72 bg-pink-500/20 rounded-full blur-3xl bottom-20 right-20 animate-pulse" />
 
       {/* Card */}
       <div className="relative z-10 flex flex-col items-center gap-6 px-10 py-8 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/10 shadow-2xl">
-        
+
         {/* Spinner */}
         <div className="relative">
           <div className="w-20 h-20 rounded-full border-[5px] border-white/20"></div>
@@ -53,6 +68,7 @@ function Loading() {
           <span className="w-2.5 h-2.5 rounded-full bg-white animate-bounce delay-150"></span>
           <span className="w-2.5 h-2.5 rounded-full bg-white animate-bounce delay-300"></span>
         </div>
+
       </div>
     </div>
   );
