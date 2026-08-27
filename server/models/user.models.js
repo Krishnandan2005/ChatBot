@@ -22,12 +22,19 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
 
+    // Purchased credits
     credits: {
+      type: Number,
+      default: 0,
+    },
+
+    // Daily free credits
+    dailyCredits: {
       type: Number,
       default: 20,
     },
 
-    // Tracks when the user last received daily credits
+    // Last date when daily credits were reset
     lastDailyCreditDate: {
       type: Date,
       default: null,

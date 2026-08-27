@@ -28,7 +28,8 @@ export const registerUser = async (req, res) => {
       name,
       email,
       password,
-      credits: 20,
+      credits: 0,
+      dailyCredits: 20,
       lastDailyCreditDate: new Date(),
     });
 
@@ -93,13 +94,13 @@ export const loginUser = async (req, res) => {
 export const getUser = async (req, res) => {
   try {
     const user = req.user;
-
     const now = new Date();
 
-    let shouldGiveDailyCredits = false;
-
     if (!user.lastDailyCreditDate) {
-      shouldGiveDailyCredits = true;
+      user.dailyCredits = 20;
+      user.lastDailyCreditDate = now;
+
+      await user.save();
     } else {
       const lastDate = new Date(user.lastDailyCreditDate);
 
@@ -115,16 +116,13 @@ export const getUser = async (req, res) => {
         now.getDate()
       );
 
+      // New day → reset daily credits to 20
       if (currentDay > lastDay) {
-        shouldGiveDailyCredits = true;
+        user.dailyCredits = 20;
+        user.lastDailyCreditDate = now;
+
+        await user.save();
       }
-    }
-
-    if (shouldGiveDailyCredits) {
-      user.credits += 20;
-      user.lastDailyCreditDate = now;
-
-      await user.save();
     }
 
     return res.json({

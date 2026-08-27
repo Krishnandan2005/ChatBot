@@ -210,8 +210,8 @@ const Sidebar = ({ isMenuOpen, setMenuOpen }) => {
 
         <div className="flex flex-col">
           <p className="text-sm font-medium">
-            Credits: {user?.credits ?? 0}
-          </p>
+  Credits: {(user?.credits ?? 0) + (user?.dailyCredits ?? 0)}
+</p>
 
           <p className="text-xs text-gray-400">
             Buy more credits

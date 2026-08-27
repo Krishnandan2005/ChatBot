@@ -4,12 +4,64 @@ import Chat from "../models/chat.models.js";
 import User from "../models/user.models.js";
 import imagekit from "../configs/imagekit.js";
 
-// text based AI Chat message controller
+// -------------------------------------------------------
+// Deduct credits
+// Daily credits are used first.
+// Paid credits are used after daily credits are exhausted.
+// -------------------------------------------------------
+const deductCredits = async (userId, amount) => {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const dailyCredits = user.dailyCredits || 0;
+  const paidCredits = user.credits || 0;
+
+  const totalCredits = dailyCredits + paidCredits;
+
+  if (totalCredits < amount) {
+    return false;
+  }
+
+  // Use daily credits first
+  const dailyUsed = Math.min(dailyCredits, amount);
+
+  // Remaining amount comes from paid credits
+  const paidUsed = amount - dailyUsed;
+
+  user.dailyCredits = dailyCredits - dailyUsed;
+  user.credits = paidCredits - paidUsed;
+
+  await user.save();
+
+  return true;
+};
+
+
+// -------------------------------------------------------
+// Text based AI Chat message controller
+// -------------------------------------------------------
 export const textMessageController = async (req, res) => {
   try {
     const userId = req.user._id;
 
-    if (req.user.credits < 1) {
+    // Get fresh user data
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const dailyCredits = user.dailyCredits || 0;
+    const paidCredits = user.credits || 0;
+
+    // Text generation costs 1 credit
+    if (dailyCredits + paidCredits < 1) {
       return res.json({
         success: false,
         message: "You don't have enough credits to use this feature",
@@ -18,7 +70,10 @@ export const textMessageController = async (req, res) => {
 
     const { chatId, prompt } = req.body;
 
-    const chat = await Chat.findOne({ userId, _id: chatId });
+    const chat = await Chat.findOne({
+      userId,
+      _id: chatId,
+    });
 
     if (!chat) {
       return res.json({
@@ -54,13 +109,12 @@ export const textMessageController = async (req, res) => {
 
     await chat.save();
 
-    console.log("Chat saved successfully!");
-    console.log(chat);
+    // Deduct 1 credit after successful generation
+    const deducted = await deductCredits(userId, 1);
 
-    await User.updateOne(
-      { _id: userId },
-      { $inc: { credits: -1 } }
-    );
+    if (!deducted) {
+      console.error("Failed to deduct credit after text generation");
+    }
 
     res.json({
       success: true,
@@ -76,13 +130,29 @@ export const textMessageController = async (req, res) => {
   }
 };
 
-// api controller function to generate images -------------------------------------------------------
 
+// -------------------------------------------------------
+// Image generation controller
+// -------------------------------------------------------
 export const imageMessageController = async (req, res) => {
   try {
     const userId = req.user._id;
 
-    if (req.user.credits < 2) {
+    // Get fresh user data
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const dailyCredits = user.dailyCredits || 0;
+    const paidCredits = user.credits || 0;
+
+    // Image generation costs 2 credits
+    if (dailyCredits + paidCredits < 2) {
       return res.json({
         success: false,
         message: "You don't have enough credits to use this feature",
@@ -141,13 +211,12 @@ export const imageMessageController = async (req, res) => {
 
     await chat.save();
 
-    console.log("Chat saved successfully!");
-    console.log(chat);
+    // Deduct 2 credits after successful generation
+    const deducted = await deductCredits(userId, 2);
 
-    await User.updateOne(
-      { _id: userId },
-      { $inc: { credits: -2 } }
-    );
+    if (!deducted) {
+      console.error("Failed to deduct credits after image generation");
+    }
 
     res.json({
       success: true,
