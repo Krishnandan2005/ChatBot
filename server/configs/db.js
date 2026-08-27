@@ -6,7 +6,7 @@ dns.setServers([
 ]);
 
 const connectDB = async () => {
-    console.log("URI:", process.env.MONGODB_URI) // 👈 add this
+    console.log("URI:", process.env.MONGODB_URI) 
     try {
         mongoose.connection.on('connected', ()=> {
             console.log("Successfully connected to MongoDB !!!"); 
@@ -14,7 +14,7 @@ const connectDB = async () => {
         await mongoose.connect(`${process.env.MONGODB_URI}/bot`)
     } catch (error) {
         console.log(`MongoDB Connection Failed : `,error);
-        process.exit(1); // 👈 add this
+        process.exit(1); 
         
     }
 }
