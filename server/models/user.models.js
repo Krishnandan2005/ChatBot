@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+
     email: {
       type: String,
       required: true,
@@ -15,21 +16,29 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
+
     password: {
       type: String,
       required: true,
     },
+
     credits: {
       type: Number,
       default: 20,
     },
+
+    // Tracks when the user last received daily credits
+    lastDailyCreditDate: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
-  },
+  }
 );
 
-// hash password before saving
+// Hash password before saving
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
 
@@ -38,4 +47,5 @@ userSchema.pre("save", async function () {
 });
 
 const User = mongoose.model("User", userSchema);
+
 export default User;

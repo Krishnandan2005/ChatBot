@@ -12,23 +12,39 @@ const generateToken =  (id) => {
 
 // API to register user
 export const registerUser = async (req, res) => {
-    const {name , email , password } = req.body;
+  const { name, email, password } = req.body;
 
-    try {
-        const userExists = await User.findOne({email}) 
-        if(userExists){
-            return res.json({success: false,message:"user already exists."})
-        }
+  try {
+    const userExists = await User.findOne({ email });
 
-        const user = await User
-        .create({name,email,password})
-
-        const token = generateToken(user._id)
-        res.json({success:true,token})
-    } catch (error) {
-        return res.json({success:false,message: error.message})
+    if (userExists) {
+      return res.json({
+        success: false,
+        message: "User already exists.",
+      });
     }
-}
+
+    const user = await User.create({
+      name,
+      email,
+      password,
+      credits: 20,
+      lastDailyCreditDate: new Date(),
+    });
+
+    const token = generateToken(user._id);
+
+    res.json({
+      success: true,
+      token,
+    });
+  } catch (error) {
+    return res.json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
 
 // API to login user
@@ -74,16 +90,54 @@ export const loginUser = async (req, res) => {
 
 
 // api to get user data 
-export const getUser = async (req,res) => {
+export const getUser = async (req, res) => {
+  try {
+    const user = req.user;
 
-    try {
-        const user = req.user;
-        return res.json({success:true,user})
-    } catch (error) {
-        return res.json({success:false,message: error.message})
+    const now = new Date();
+
+    let shouldGiveDailyCredits = false;
+
+    if (!user.lastDailyCreditDate) {
+      shouldGiveDailyCredits = true;
+    } else {
+      const lastDate = new Date(user.lastDailyCreditDate);
+
+      const lastDay = new Date(
+        lastDate.getFullYear(),
+        lastDate.getMonth(),
+        lastDate.getDate()
+      );
+
+      const currentDay = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate()
+      );
+
+      if (currentDay > lastDay) {
+        shouldGiveDailyCredits = true;
+      }
     }
-    
-}
+
+    if (shouldGiveDailyCredits) {
+      user.credits += 20;
+      user.lastDailyCreditDate = now;
+
+      await user.save();
+    }
+
+    return res.json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    return res.json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
 
 //  api to get images published 
