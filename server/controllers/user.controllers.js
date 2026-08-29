@@ -145,40 +145,17 @@ export const getPublishedImages = async (req, res) => {
       {
         $unwind: "$messages",
       },
-
       {
         $match: {
           "messages.isImage": true,
           "messages.isPublished": true,
         },
       },
-
-      // Get user details using userId
-      {
-        $lookup: {
-          from: "users",
-          localField: "userId",
-          foreignField: "_id",
-          as: "user",
-        },
-      },
-
-      {
-        $unwind: {
-          path: "$user",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-
       {
         $project: {
           _id: 0,
-
-          // IMPORTANT: frontend expects imageUrl
           imageUrl: "$messages.content",
-
-          // User name
-          userName: "$user.name",
+          userName: "$username",
         },
       },
     ]);
