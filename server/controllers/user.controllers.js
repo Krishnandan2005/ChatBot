@@ -138,29 +138,61 @@ export const getUser = async (req, res) => {
 };
 
 
-//  api to get images published 
-export const getPublishedImages = async (req,res) => {
-    try {
-        const publishedImagesMessages = await Chat.aggregate([
-            {
-                $unwind: "$messages"},
-                {
-                    $match:{
-                        "messages.isImage":true,
-                        "messages.isPublished":true
-                    }
-                },
-                {
-                    $project: {
-                        _id:0,
-                        imageurl:"$messages.content",
-                        userName:"$userName"
-                    }
-                }
-        ])
-        res.json({success:true,images: publishedImagesMessages.reverse()})
-    } catch (error) {
-        res.json({success:true,message:error.message});
-    }
-    
-}
+// API to get images published
+export const getPublishedImages = async (req, res) => {
+  try {
+    const publishedImagesMessages = await Chat.aggregate([
+      {
+        $unwind: "$messages",
+      },
+
+      {
+        $match: {
+          "messages.isImage": true,
+          "messages.isPublished": true,
+        },
+      },
+
+      // Get user details using userId
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+
+      {
+        $unwind: {
+          path: "$user",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+
+      {
+        $project: {
+          _id: 0,
+
+          // IMPORTANT: frontend expects imageUrl
+          imageUrl: "$messages.content",
+
+          // User name
+          userName: "$user.name",
+        },
+      },
+    ]);
+
+    res.json({
+      success: true,
+      images: publishedImagesMessages.reverse(),
+    });
+  } catch (error) {
+    console.error("Get published images error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
